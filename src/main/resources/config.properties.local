@@ -1,0 +1,8 @@
+## Elastic Search Config::
+esHost = localhost
+esCluster = Interstellar
+esPort = 9300
+
+##index name cant be capital letter
+esIndex = index-name
+esType = type-name

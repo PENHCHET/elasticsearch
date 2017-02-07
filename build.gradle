@@ -1,0 +1,30 @@
+apply plugin: 'eclipse-wtp'
+apply plugin: 'war'
+apply plugin: 'maven'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile 'org.elasticsearch:elasticsearch:1.7.2'
+}
+
+task createDirs << {
+println "creating dirs"
+  sourceSets*.java.srcDirs*.each { it.mkdirs() }
+  sourceSets*.resources.srcDirs*.each { it.mkdirs() }
+  sourceSets.main.java.srcDir "src/main/config"
+}
+
+task sageen << {
+println "hello Sageen!! welcome to gradle project"
+}
+
+
+/* RUN as follows:
+gradle -q createDirs
+gradle build
+gradle eclipse
+*/
