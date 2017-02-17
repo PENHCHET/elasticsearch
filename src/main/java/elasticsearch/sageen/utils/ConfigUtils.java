@@ -9,8 +9,6 @@ public class ConfigUtils {
 
 	/**
 	 * This method reads and returns specified property from properties file
-	 * Note that VM argument -Dfuse.env=value is mandatory
-	 * 
 	 * @param text
 	 * @return
 	 */
