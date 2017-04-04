@@ -24,63 +24,44 @@ public class Query {
 	private static final String index =ConfigUtils.getProperty("esIndex");
 	private static final String type =ConfigUtils.getProperty("esType");
 	private static final Client client = ElasticSearch.CLIENT.getInstance();
+	
+	 //fields
+		private static String field = "profile_experience.title.raw";
+		private static String rangeField = "company_rank";
+			
+			
+		//values
+		private static String idToSearch = "AVblysikw4nxuAH43H_1";
+		private static String termValue = "";
+		private static String matchValue = "";
+		private static String matchPhraseValue = "manager";
+		private static String wildCardValue = "Dir*";
+		private static String prefixValue="Dir";
+		private static String fuzzyValue="directar";
+		//boolquery value
+		private static String mustValue = "Accountant";
+		private static String mustNotValue = "Account";
+		private static String shouldValue = "Sales Manager";
+		
+			
+		private static String QueryString="Sales AND Manager OR Representative";
+			//boost
+		private static float boostBy=0f;
+		private static String boostValue = "Vice";
+		private static List<String> termsValue=new ArrayList<String>();
 
-	private static String field = "";
-	private static String value = "";
-	private static String idToSearch = "";
-	private static String singleField = "";
-	private static String mustValue = "";
-	private static String mustNotValue = "";
-	private static String shouldValue = "";
-	private static String rangeField = "";
-	private static String QueryString="";
-	private static float boostBy=0f;
-	private static String boostValue = "";
-	private static String prefixValue="";
-	private static List<String> values;
+	
 	private final static int size= 50;
-	private static int from;
+	private static int from=0;
 	
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
-		QueryType searchType = QueryType.MATCH_PHRASE;
-		
-		//fields
-		rangeField= "company_rank";
-		field = "FIELD_NAME.SUB_FILED.lower_case_sort";
-		
-		//values:
-		//for Term , match query, match phrase query
-		value = "Esta loca!";
-		
-		//prefix
-		prefixValue= "Dir";
-		
-		//for search By ID
-		idToSearch = "AVblysikw4nxuAH43H_1";
-		
-		//for termsQuery
-		values = new ArrayList<String>();
-		values.add("Accounting Manager");
-		values.add("Sales Manager");
-		
-		//for bool query must and mustnot and should
-		mustNotValue = "Accounting Manager";
-		mustValue = "Marketing Manager";
-		shouldValue = "Sales Manager";
-		
-		//for single field return
-		singleField = "FIELD_NAME";
-		
-		// BOOST Query
-		boostBy = 0.1f;
-		boostValue= "sales Manager";
-		
-		//Query String Query
-		QueryString = "Sales AND Manager OR Representative";
-		
+		QueryType searchType = QueryType.MATCH_ALL;
+
+		termsValue.add("Accounting Manager");
+		termsValue.add("Sales Manager");
 	
 		//search
 		Query.search(searchType);
@@ -95,30 +76,28 @@ public class Query {
 		
 		//for exact match term: need not_analyzed Field
 		case TERM:
-			qb = QueryBuilders.termQuery(field, value);
+			qb = QueryBuilders.termQuery(field, termValue);
 			break;
 
 		//for exact match terms: need not_analyzed Field
 		case TERMS:
-			qb = QueryBuilders.termsQuery(field, values);
+			qb = QueryBuilders.termsQuery(field, termsValue);
 			break;
 			
 		//for match any word in term
 		case MATCH:
-			qb = QueryBuilders.matchQuery(field, value);
-			// With Queries
-			//qb = QueryBuilders.constantScoreQuery(QueryBuilders.matchQuery(field,value)).boost(2.0f);
+			qb = QueryBuilders.matchQuery(field, matchValue);
 			
 			break;
 
 		//for match phrase of word: need not_analyzed Field
 		case MATCH_PHRASE:
-			qb = QueryBuilders.matchPhraseQuery(field, value);
+			qb = QueryBuilders.matchPhraseQuery(field, matchPhraseValue);
 			break;
 
 		//for wild card search: need not_analyzed Field
 		case WILDCARD:
-			qb = QueryBuilders.wildcardQuery(field, "*"+value+"*");
+			qb = QueryBuilders.wildcardQuery(field, wildCardValue);
 			break;
 			
 		case SEARCH_BY_ID:
@@ -145,7 +124,7 @@ public class Query {
 		case BOOST:
 			qb = QueryBuilders.boostingQuery()
             .positive(QueryBuilders.termQuery(field,boostValue))
-            .negative(QueryBuilders.termQuery(field,value))
+            .negative(QueryBuilders.termQuery(field,termValue))
             .negativeBoost(boostBy)
             .boost(boostBy);  
 			break;
@@ -162,11 +141,6 @@ public class Query {
 		    .lte(10);  
 			
 			break;
-		//return single field	
-		case GET_SINGLE_FIELD:
-			srb.addFields(singleField);
-			qb = QueryBuilders.matchAllQuery();
-			break;
 		
 		//returns all datas
 		case MATCH_ALL:
@@ -176,7 +150,7 @@ public class Query {
 		//incase of spelling mistake
 		case FUZZY:
 			Fuzziness fuzziness=null;
-			qb = QueryBuilders.fuzzyQuery(field, value).fuzziness(fuzziness.TWO);
+			qb = QueryBuilders.fuzzyQuery(field, fuzzyValue).fuzziness(fuzziness.TWO);
 			break;
 			
 		//prefix value query: need not_analyzed Field
@@ -193,30 +167,25 @@ public class Query {
 		
 		if(needExecution)
 		{
-			from=0;
+			
 			System.out.println("GET "+index+"/"+type+"/_search");
-			System.out.println(srb.setQuery(qb).setFrom(from).setSize(size));
-			SearchResponse response = srb.setQuery(qb)
-					.setFrom(from)
-					.setSize(size)
-					.execute().actionGet();
-			//srb.setMinScore(0.5)
+			SearchRequestBuilder srbWithQuery = srb.setQuery(qb)
+			.setFrom(from)
+			.setSize(size);
+			
+			System.out.println(srbWithQuery);
+			
+			SearchResponse response = srbWithQuery.execute().actionGet();
 			SearchHits shs = response.getHits();
 			System.out.println(searchType +" hits: " + shs.getTotalHits());
 			for (SearchHit sh : response.getHits().getHits()) {
-				if(searchType==QueryType.GET_SINGLE_FIELD)
-				{
-					System.out.println(sh.getSourceAsString());
-					System.out.println(sh.field("fieldName").getValue().toString());
-				}
-				else
-				{
+
 					System.out.println("************************");
 					System.out.println("ES score::"+sh.getScore());
 					System.out.println(sh.getId());
 					System.out.println("DOCUMENTS::"+sh.getSourceAsString());
 					System.out.println("************************");
-				}
+				
 			}
 		}
 		long endTime = System.currentTimeMillis();
